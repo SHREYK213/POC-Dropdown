@@ -50,17 +50,66 @@
       <div (click)="onSelectCheck(check.id)">
         {{ check.checkName }} - ID: {{ check.id }}
       </div>
+      <mat-select
+        *ngIf="
+          isCheckSelected(check.id) &&
+          !check.configuration.isRecurring &&
+          check.configuration.isExpectingDocument &&
+          check.configuration.isCheckDropdown &&
+          check.configuration.checkDropDownOptions.count
+        "
+        [id]="check.id + '_check_options_dropdown'"
+      >
+        <mat-option
+          *ngFor="
+            let option of check.configuration.checkDropDownOptions.options;
+            let i = index
+          "
+          [value]="option"
+        >
+          {{ option }}
+        </mat-option>
+      </mat-select>
+      <mat-select
+        *ngIf="
+          isCheckSelected(check.id) &&
+          !check.configuration.isRecurring &&
+          check.configuration.isExpectingDocument &&
+          (!check.configuration.isCheckDropdown ||
+            !check.configuration.checkDropDownOptions.count)
+        "
+        [id]="check.id + '_document'"
+      >
+        <mat-option
+          *ngFor="
+            let option of check.configuration.expectedDocuments.options;
+            let i = index
+          "
+          [value]="option"
+        >
+          {{ option }}
+        </mat-option>
+      </mat-select>
       <mat-slide-toggle
+        [checked]="isToggleChecked(check.id)"
+        (change)="onToggleChange(check.id, $event)"
         *ngIf="isCheckSelected(check.id) && check.configuration.isRecurring"
         [id]="check.id + '_toggle'"
       >
       </mat-slide-toggle>
       <mat-select
-        *ngIf="isCheckSelected(check.id) && check.configuration.isRecurring"
+        *ngIf="
+          isCheckSelected(check.id) &&
+          check.configuration.isRecurring &&
+          isToggleChecked(check.id)
+        "
         [id]="check.id + '_dropdown'"
       >
         <mat-option
-          *ngFor="let option of check.configuration.recurringOptions.options"
+          *ngFor="
+            let option of check.configuration.recurringOptions.options;
+            let i = index
+          "
           [value]="option"
         >
           {{ option }}

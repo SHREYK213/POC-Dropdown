@@ -11,74 +11,12 @@ import { MatSlideToggle } from '@angular/material/slide-toggle';
   templateUrl: './dropdown.component.html',
   styleUrls: ['./dropdown.component.scss'],
 })
-export class DropdownComponent {
+export class DropdownComponent implements AfterViewInit {
   categories: any;
   @ViewChildren(MatSlideToggle) slideToggles!: QueryList<MatSlideToggle>;
   selectedChecks: string[] = [];
-  selectedCheckId: string | null = null;
-
-  // assigning id
-  private assignIds(): void {
-    let categoryId = 1;
-
-    for (const category in this.categories.data.checks) {
-      const categoryKey = `${category.toLowerCase()}-${categoryId++}`;
-
-      this.categories.data.checks[categoryKey] =
-        // this.categories.data.checks[key];
-        this.categories.data.checks[category];
-
-      delete this.categories.data.checks[category];
-      // delete this.categories.checks[category];
-      this.categories.data.checks[categoryKey].forEach(
-        (check: any, index: number) => {
-          check.id = `${categoryId - 1}_${index + 1}`;
-          console.log(
-            `Category: ${categoryKey}, Check Name: ${check.checkName}, ID: ${check.id}`
-          );
-        }
-      );
-    }
-  }
-
-  // configurations for all categories and checks
-  private checkAllConfigurations(): void {
-    for (const categoryKey in this.categories.data.checks) {
-      if (this.categories.data.checks.hasOwnProperty(categoryKey)) {
-        this.categories.data.checks[categoryKey].forEach((check: any) => {
-          // this.checkConfigurations(categoryKey,id);
-          this.checkConfigurations(categoryKey, check.id);
-        });
-      }
-    }
-  }
-
-  // configurations for a specific category and ID
-  private checkConfigurations(categoryKey: string, checkId: string): void {
-    const checkCategory = this.categories.data.checks[categoryKey];
-    // const category = this.categories.checks[categoryKey];
-
-    if (checkCategory) {
-      const check = checkCategory.find((c: any) => c.id === checkId);
-
-      if (check) {
-        console.log(
-          `Category: ${categoryKey}, Check Name: ${check.checkName},ID: ${check.id}`
-        );
-        console.log(
-          `Is Recurring: ${
-            check.configuration ? check.configuration.isRecurring : false
-          }`
-        );
-      } else {
-        console.log(
-          `Category: ${categoryKey}, Check with ID ${checkId} not found`
-        );
-      }
-    } else {
-      console.log(`Category: ${categoryKey} not found`);
-    }
-  }
+  toggleState: { [key: string]: boolean } = {};
+  generatedIds: { [key: string]: string } = {};
 
   constructor() {
     this.categories = {
@@ -456,41 +394,92 @@ export class DropdownComponent {
       },
     };
     this.assignIds();
-    // const categoryId = 1;
-    // const checkId = 1;
-    // this.checkConfigurations('nationality', categoryId, checkId);
+
+    // let count=1
+    // let categoryKey=1
     this.checkAllConfigurations();
   }
 
-  // checks
+  private assignIds(): void {
+    let categoryId = 1;
+
+    for (const category in this.categories.data.checks) {
+      const categoryKey = `${category.toLowerCase()}-${categoryId++}`;
+
+      //   this.categories.data.checks[categoryKey] =
+      //   this.categories.data.checks[categoryKey];
+      this.categories.data.checks[categoryKey] =
+        this.categories.data.checks[category];
+      delete this.categories.data.checks[category];
+
+      this.categories.data.checks[categoryKey].forEach(
+        (check: any, index: number) => {
+          // check.id = `${categoryKey - 1}_${index + 1}`;
+          check.id = `${categoryId - 1}_${index + 1}`;
+          this.generatedIds[check.checkName] = check.id;
+          console.log(
+            `Category: ${categoryKey}, checkName: ${check.checkName}, ID: ${check.id}`
+          );
+        }
+      );
+    }
+  }
+
+  // this is to check the config for all
+  private checkAllConfigurations(): void {
+    for (const categoryKey in this.categories.data.checks) {
+      if (this.categories.data.checks.hasOwnProperty(categoryKey)) {
+        this.categories.data.checks[categoryKey].forEach((check: any) => {
+          this.checkConfigurations(categoryKey, check.id);
+        });
+      }
+    }
+  }
+
+  //this is to check the config for specific id
+  private checkConfigurations(categoryKey: string, checkId: string): void {
+    const checkCategory = this.categories.data.checks[categoryKey];
+
+    if (checkCategory) {
+      const check = checkCategory.find((c: any) => c.id === checkId);
+
+      if (check) {
+        console.log(
+          `Category: ${categoryKey}, Check Name: ${check.checkName}, ID: ${check.id}`
+        );
+        console.log(
+          `Is Recurring: ${
+            check.configuration ? check.configuration.isRecurring : false
+          }`
+        );
+      } else {
+        console.log(
+          `Category: ${categoryKey}, Check with ID ${checkId} not found`
+        );
+      }
+    } else {
+      console.log(`Category: ${categoryKey} not found`);
+    }
+  }
+
+  // this is for the categoryKey
   getCategoryKeys(): string[] {
     return Object.keys(this.categories.data.checks);
   }
 
   getCategoryName(categoryKey: string): string {
     return categoryKey.split('-')[0];
-    // return category.id.split('-')[0];
   }
 
   getChecks(categoryKey: string): any[] {
     return this.categories.data.checks[categoryKey];
   }
 
-  // onSelectCheck(checkId: string) {
-  //   this.selectedCheckId = checkId;
-  // }
-
-  // isCheckSelected(checkId: string): boolean {
-  //   return this.selectedCheckId === checkId;
-  // }
-
   onSelectCheck(checkId: string): void {
     const index = this.selectedChecks.indexOf(checkId);
     if (index === -1) {
-      // Check not selected, add to the list
       this.selectedChecks.push(checkId);
     } else {
-      // Check already selected, remove from the list
       this.selectedChecks.splice(index, 1);
     }
     console.log('Selected Checks:', this.selectedChecks);
@@ -500,10 +489,91 @@ export class DropdownComponent {
     return this.selectedChecks.includes(checkId);
   }
 
+  isToggleChecked(checkId: string): boolean {
+    return this.toggleState[checkId] || false;
+  }
+
+  onToggleChange(checkId: string, event: any): void {
+    this.toggleState[checkId] = event.checked;
+  }
+
+  isCheckDropdownVisible(check: any): boolean {
+    const isVisible =
+      this.isCheckSelected(check.id) &&
+      !check.configuration.isRecurring &&
+      check.configuration.isExpectingDocument &&
+      check.configuration.isCheckDropdown &&
+      // check.configuration.checkDropDownOptions&&;
+      check.configuration.checkDropDownOptions.count;
+
+    if (isVisible) {
+      console.log(
+        `Check ID: ${check.id}, Check Dropdown ID: ${
+          check.id + '_check_options_dropdown'
+        }`
+      );
+    }
+
+    return isVisible;
+  }
+
+  isDocumentDropdownVisible(check: any): boolean {
+    const isVisible =
+      this.isCheckSelected(check.id) &&
+      !check.configuration.isRecurring &&
+      check.configuration.isExpectingDocument &&
+      (!check.configuration.isCheckDropdown ||
+        !check.configuration.checkDropDownOptions.count);
+
+    if (isVisible) {
+      console.log(
+        `Check ID: ${check.id}, Document Dropdown ID: ${check.id + '_document'}`
+      );
+    }
+
+    return isVisible;
+  }
+
+  isToggleVisible(check: any): boolean {
+    const isVisible =
+      this.isCheckSelected(check.id) && check.configuration.isRecurring;
+
+    // if (isVisible) {
+    //   console.log(`Check ID: ${check.id}, Toggle ID: ${check.id + '_toggle'}`);
+    // }
+
+    return isVisible;
+  }
+
+  isDropdownVisible(check: any): boolean {
+    const isVisible =
+      this.isCheckSelected(check.id) &&
+      check.configuration.isRecurring &&
+      this.isToggleChecked(check.id);
+
+    // if (isVisible) {
+    //   console.log(
+    //     `Check ID: ${check.id}, Dropdown ID: ${check.id + '_dropdown'}`
+    //   );
+    // }
+
+    return isVisible;
+  }
+
   ngAfterViewInit() {
-    // Log the IDs of the slide toggles to the console
+    console.log('ngAfterViewInit called');
+
     this.slideToggles.forEach((toggle) => {
       console.log('Toggle ID:', toggle.id);
     });
+
+    // Log the generated IDs
+    for (const checkName in this.generatedIds) {
+      console.log(
+        `Check Name: ${checkName}, Generated ID: ${this.generatedIds[checkName]}`
+      );
+    }
+
+    console.log('ngAfterViewInit completed');
   }
 }
