@@ -1,52 +1,11 @@
-<!-- <div *ngFor="let dropdown of dropdownData">
-    <h3>{{ dropdown.title }}</h3>
-    <select>
-      <option *ngFor="let option of dropdown.options" [value]="option.id">{{ option.name }}</option>
-    </select>
-  </div>
-   -->
-<!-- 
-<mat-accordion>
-  <mat-expansion-panel
-    *ngFor="let dropdown of dropdownData"
-    (opened)="matExpansionPanelExpanded = true"
-  >
-    <mat-expansion-panel-header>
-      <mat-panel-title>
-        {{ dropdown.title }}
-      </mat-panel-title>
-    </mat-expansion-panel-header>
-    <div *ngIf="matExpansionPanelExpanded">
-      <div
-        *ngFor="let option of dropdown.options"
-        class="option-item"
-        (click)="selectOption(option)"
-      >
-        <div class="option-container">
-          <span class="option-title">{{ option.name }}</span>
-          <mat-slide-toggle
-            *ngIf="
-              isSelected(option) && shouldDisplayToggleButton(dropdown.title)
-            "
-            color="primary"
-            (click)="$event.stopPropagation()"
-          >
-            {{ option.configuration?.isRecurring }}
-          </mat-slide-toggle>
-        </div>
-      </div>
-    </div>
-  </mat-expansion-panel>
-</mat-accordion> -->
-
 <mat-accordion>
   <mat-expansion-panel *ngFor="let categoryKey of getCategoryKeys()">
     <mat-expansion-panel-header>
       <mat-panel-title>
-        {{ getCategoryName(categoryKey) }}
+        {{ getCategoryName(categoryKey) }} -ID: {{ categoryKey }}
       </mat-panel-title>
     </mat-expansion-panel-header>
-    <div *ngFor="let check of getChecks(categoryKey)">
+    <div *ngFor="let check of getChecks(categoryKey)" class="checkName">
       <div (click)="onSelectCheck(check.id)">
         {{ check.checkName }} - ID: {{ check.id }}
       </div>
@@ -60,16 +19,55 @@
         "
         [id]="check.id + '_check_options_dropdown'"
       >
+        <mat-option [id]="check.id + '_check_option_select'" [value]="'Select'">
+          Select
+        </mat-option>
         <mat-option
           *ngFor="
             let option of check.configuration.checkDropDownOptions.options;
             let i = index
           "
+          [id]="check.id + '_check_option_' + (i + 1)"
           [value]="option"
         >
           {{ option }}
         </mat-option>
       </mat-select>
+
+      <div
+        *ngIf="
+          isCheckSelected(check.id) &&
+          !check.configuration.isRecurring &&
+          check.configuration.isExpectingDocument &&
+          check.configuration.isCheckDropdown &&
+          check.configuration.checkDropDownOptions.count
+        "
+      >
+        <input
+          type="number"
+          [(ngModel)]="check.configuration.checkDropDownOptions.countValue"
+          min="0"
+          step="1"
+        />
+        <button (click)="incrementCount(check)">+</button>
+        <button (click)="decrementCount(check)">-</button>
+
+        <div *ngIf="check.configuration.expectedDocuments">
+          <mat-select [id]="check.id + '_document'" multiple>
+            <mat-option
+              *ngFor="
+                let option of check.configuration.expectedDocuments.options;
+                let i = index
+              "
+              [id]="check.id + '_document_option_' + i"
+              [value]="option"
+            >
+              {{ option }}
+            </mat-option>
+          </mat-select>
+        </div>
+      </div>
+
       <mat-select
         *ngIf="
           isCheckSelected(check.id) &&
@@ -85,6 +83,7 @@
             let option of check.configuration.expectedDocuments.options;
             let i = index
           "
+          [id]="check.id + '_document_option_' + i"
           [value]="option"
         >
           {{ option }}
@@ -110,6 +109,7 @@
             let option of check.configuration.recurringOptions.options;
             let i = index
           "
+          [id]="check.id + '_dropdown_option_' + i"
           [value]="option"
         >
           {{ option }}
@@ -117,4 +117,19 @@
       </mat-select>
     </div>
   </mat-expansion-panel>
+
+  <!-- <div class="selected-items-card">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Selected Items</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div *ngFor="let selectedCheckId of selectedChecks">
+          <div>
+            {{ getCheckConfiguration(selectedCheckId) | json }}
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div> -->
 </mat-accordion>

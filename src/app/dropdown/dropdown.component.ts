@@ -17,6 +17,9 @@ export class DropdownComponent implements AfterViewInit {
   selectedChecks: string[] = [];
   toggleState: { [key: string]: boolean } = {};
   generatedIds: { [key: string]: string } = {};
+  checkConfiguration: any;
+  selectedCheckOption: string | null = null;
+  isOptionSelected: boolean = false;
 
   constructor() {
     this.categories = {
@@ -525,22 +528,12 @@ export class DropdownComponent implements AfterViewInit {
       (!check.configuration.isCheckDropdown ||
         !check.configuration.checkDropDownOptions.count);
 
-    if (isVisible) {
-      console.log(
-        `Check ID: ${check.id}, Document Dropdown ID: ${check.id + '_document'}`
-      );
-    }
-
     return isVisible;
   }
 
   isToggleVisible(check: any): boolean {
     const isVisible =
       this.isCheckSelected(check.id) && check.configuration.isRecurring;
-
-    // if (isVisible) {
-    //   console.log(`Check ID: ${check.id}, Toggle ID: ${check.id + '_toggle'}`);
-    // }
 
     return isVisible;
   }
@@ -551,13 +544,51 @@ export class DropdownComponent implements AfterViewInit {
       check.configuration.isRecurring &&
       this.isToggleChecked(check.id);
 
-    // if (isVisible) {
-    //   console.log(
-    //     `Check ID: ${check.id}, Dropdown ID: ${check.id + '_dropdown'}`
-    //   );
-    // }
-
     return isVisible;
+  }
+
+  incrementCount(check: any): void {
+    if (
+      check.configuration.checkDropDownOptions.countValue === undefined ||
+      isNaN(check.configuration.checkDropDownOptions.countValue)
+    ) {
+      check.configuration.checkDropDownOptions.countValue = 0;
+    }
+    check.configuration.checkDropDownOptions.countValue++;
+  }
+
+  decrementCount(check: any): void {
+    if (
+      check.configuration.checkDropDownOptions.countValue === undefined ||
+      isNaN(check.configuration.checkDropDownOptions.countValue) ||
+      check.configuration.checkDropDownOptions.countValue <= 0
+    ) {
+      check.configuration.checkDropDownOptions.countValue = 0;
+    } else {
+      check.configuration.checkDropDownOptions.countValue--;
+    }
+  }
+
+  isInputEnabled(check: any): boolean {
+    return check && check.configuration && check.configuration.someCondition;
+  }
+
+  onCheckOptionChange(check: any, selectedOption: string | null): void {
+    check.configuration.checkDropDownOptions.countValue = 0;
+    this.selectedCheckOption = selectedOption;
+    this.isOptionSelected = selectedOption !== null;
+  }
+
+  getCheckName(checkId: string): string {
+    for (const categoryKey in this.categories.data.checks) {
+      const check = this.categories.data.checks[categoryKey].find(
+        (c: any) => c.id === checkId
+      );
+      if (check) {
+        return check.checkName;
+      }
+    }
+    return '';
   }
 
   ngAfterViewInit() {
